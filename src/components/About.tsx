@@ -1,4 +1,5 @@
 import { Target, Users, Award, Zap, CheckCircle2 } from 'lucide-react';
+import { ScrollReveal } from '@/hooks/useScrollAnimation';
 
 const features = [
   {
@@ -51,7 +52,7 @@ const About = () => {
       <div className="container-responsive relative z-10">
         <div className="grid lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 3xl:gap-24 items-center">
           {/* Content Side */}
-          <div className="animate-slide-in-left">
+          <ScrollReveal animation="slide-left">
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-5xl 3xl:text-6xl font-bold mb-4 sm:mb-6">
               <span className="text-foreground">Sobre a </span>
               <span className="text-primary glow-text">Diix Academy</span>
@@ -84,26 +85,28 @@ const About = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </ScrollReveal>
 
           {/* Features Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6 3xl:gap-8">
             {features.map((feature, index) => (
-              <div
+              <ScrollReveal
                 key={feature.title}
-                className="fantasy-card rounded-2xl sm:rounded-3xl p-5 sm:p-6 lg:p-6 3xl:p-8 glass-card-hover animate-fade-up"
-                style={{ animationDelay: `${0.1 + index * 0.1}s` }}
+                animation="scale-in"
+                delay={index * 100}
               >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 3xl:w-18 3xl:h-18 rounded-xl sm:rounded-2xl glass-card flex items-center justify-center mb-4 sm:mb-5 group-hover:shadow-[0_0_20px_hsl(var(--cyan-glow)/0.3)] transition-all">
-                  <feature.icon className="w-6 h-6 sm:w-7 sm:h-7 3xl:w-9 3xl:h-9 text-primary" />
+                <div className="fantasy-card rounded-2xl sm:rounded-3xl p-5 sm:p-6 lg:p-6 3xl:p-8 glass-card-hover h-full">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 3xl:w-18 3xl:h-18 rounded-xl sm:rounded-2xl glass-card flex items-center justify-center mb-4 sm:mb-5 group-hover:shadow-[0_0_20px_hsl(var(--cyan-glow)/0.3)] transition-all">
+                    <feature.icon className="w-6 h-6 sm:w-7 sm:h-7 3xl:w-9 3xl:h-9 text-primary" />
+                  </div>
+                  <h3 className="font-heading text-lg sm:text-xl 3xl:text-2xl font-semibold text-foreground mb-2 sm:mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm sm:text-base 3xl:text-lg text-muted-foreground font-body leading-relaxed">
+                    {feature.description}
+                  </p>
                 </div>
-                <h3 className="font-heading text-lg sm:text-xl 3xl:text-2xl font-semibold text-foreground mb-2 sm:mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-sm sm:text-base 3xl:text-lg text-muted-foreground font-body leading-relaxed">
-                  {feature.description}
-                </p>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>

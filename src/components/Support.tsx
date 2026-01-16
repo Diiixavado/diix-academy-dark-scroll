@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { ScrollReveal } from '@/hooks/useScrollAnimation';
 
 const supportChannels = [
   {
@@ -73,77 +74,78 @@ const Support = () => {
 
       <div className="container-responsive relative z-10">
         {/* Section Header */}
-        <div className="text-center mb-12 sm:mb-16 lg:mb-20">
-          <h2 className="section-title animate-fade-up">
-            <span className="text-foreground">Central de </span>
-            <span className="text-primary glow-text">Suporte</span>
-          </h2>
-          <p className="section-subtitle animate-fade-up delay-100">
-            Estamos aqui para ajudar. Escolha o canal de suporte que preferir
-          </p>
-        </div>
+        <ScrollReveal animation="fade-up">
+          <div className="text-center mb-12 sm:mb-16 lg:mb-20">
+            <h2 className="section-title">
+              <span className="text-foreground">Central de </span>
+              <span className="text-primary glow-text">Suporte</span>
+            </h2>
+            <p className="section-subtitle">
+              Estamos aqui para ajudar. Escolha o canal de suporte que preferir
+            </p>
+          </div>
+        </ScrollReveal>
 
         {/* Support Channels */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 3xl:gap-8 mb-16 sm:mb-20 lg:mb-24 max-w-5xl 3xl:max-w-6xl mx-auto">
           {supportChannels.map((channel, index) => (
-            <div
-              key={channel.title}
-              className="fantasy-card rounded-xl sm:rounded-2xl lg:rounded-3xl p-4 sm:p-5 lg:p-6 3xl:p-8 text-center glass-card-hover animate-fade-up"
-              style={{ animationDelay: `${0.1 + index * 0.1}s` }}
-            >
-              <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 3xl:w-20 3xl:h-20 rounded-xl sm:rounded-2xl glass-card flex items-center justify-center mx-auto mb-3 sm:mb-4 lg:mb-5">
-                <channel.icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 3xl:w-9 3xl:h-9 text-primary" />
+            <ScrollReveal key={channel.title} animation="zoom-in" delay={index * 100}>
+              <div className="fantasy-card rounded-xl sm:rounded-2xl lg:rounded-3xl p-4 sm:p-5 lg:p-6 3xl:p-8 text-center glass-card-hover h-full">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 3xl:w-20 3xl:h-20 rounded-xl sm:rounded-2xl glass-card flex items-center justify-center mx-auto mb-3 sm:mb-4 lg:mb-5">
+                  <channel.icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 3xl:w-9 3xl:h-9 text-primary" />
+                </div>
+                <h3 className="font-heading text-sm sm:text-base lg:text-lg 3xl:text-xl font-semibold text-foreground mb-1 sm:mb-2">
+                  {channel.title}
+                </h3>
+                <p className="text-xs sm:text-sm 3xl:text-base text-muted-foreground font-body mb-3 sm:mb-4 line-clamp-2">
+                  {channel.description}
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className={`btn-fantasy-outline text-primary text-xs sm:text-sm 3xl:text-base w-full rounded-lg sm:rounded-xl py-2 sm:py-2.5 ${
+                    !channel.available ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={!channel.available}
+                >
+                  {channel.action}
+                </Button>
               </div>
-              <h3 className="font-heading text-sm sm:text-base lg:text-lg 3xl:text-xl font-semibold text-foreground mb-1 sm:mb-2">
-                {channel.title}
-              </h3>
-              <p className="text-xs sm:text-sm 3xl:text-base text-muted-foreground font-body mb-3 sm:mb-4 line-clamp-2">
-                {channel.description}
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className={`btn-fantasy-outline text-primary text-xs sm:text-sm 3xl:text-base w-full rounded-lg sm:rounded-xl py-2 sm:py-2.5 ${
-                  !channel.available ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-                disabled={!channel.available}
-              >
-                {channel.action}
-              </Button>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
 
         {/* FAQ Section */}
-        <div className="max-w-3xl 3xl:max-w-4xl mx-auto">
-          <div className="text-center mb-8 sm:mb-10 lg:mb-12 animate-fade-up delay-300">
-            <div className="inline-flex items-center gap-2 text-primary mb-3 sm:mb-4">
-              <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span className="font-tech font-medium text-sm sm:text-base 3xl:text-lg tracking-wider">PERGUNTAS FREQUENTES</span>
+        <ScrollReveal animation="fade-up">
+          <div className="max-w-3xl 3xl:max-w-4xl mx-auto">
+            <div className="text-center mb-8 sm:mb-10 lg:mb-12">
+              <div className="inline-flex items-center gap-2 text-primary mb-3 sm:mb-4">
+                <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+                <span className="font-tech font-medium text-sm sm:text-base 3xl:text-lg tracking-wider">PERGUNTAS FREQUENTES</span>
+              </div>
+              <h3 className="font-display text-2xl sm:text-3xl lg:text-4xl 3xl:text-5xl font-bold text-foreground">
+                Dúvidas Comuns
+              </h3>
             </div>
-            <h3 className="font-display text-2xl sm:text-3xl lg:text-4xl 3xl:text-5xl font-bold text-foreground">
-              Dúvidas Comuns
-            </h3>
-          </div>
 
-          <Accordion type="single" collapsible className="space-y-3 sm:space-y-4">
-            {faqs.map((faq, index) => (
-              <AccordionItem
-                key={index}
-                value={`item-${index}`}
-                className="fantasy-card rounded-xl sm:rounded-2xl px-4 sm:px-6 3xl:px-8 border-none animate-fade-up"
-                style={{ animationDelay: `${0.4 + index * 0.05}s` }}
-              >
-                <AccordionTrigger className="text-left font-heading font-medium text-foreground hover:text-primary transition-colors py-4 sm:py-5 3xl:py-6 hover:no-underline text-sm sm:text-base lg:text-lg 3xl:text-xl">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-4 sm:pb-5 font-body text-sm sm:text-base 3xl:text-lg leading-relaxed">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
+            <Accordion type="single" collapsible className="space-y-3 sm:space-y-4">
+              {faqs.map((faq, index) => (
+                <AccordionItem
+                  key={index}
+                  value={`item-${index}`}
+                  className="fantasy-card rounded-xl sm:rounded-2xl px-4 sm:px-6 3xl:px-8 border-none"
+                >
+                  <AccordionTrigger className="text-left font-heading font-medium text-foreground hover:text-primary transition-colors py-4 sm:py-5 3xl:py-6 hover:no-underline text-sm sm:text-base lg:text-lg 3xl:text-xl">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-4 sm:pb-5 font-body text-sm sm:text-base 3xl:text-lg leading-relaxed">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );

@@ -1,5 +1,6 @@
 import { ArrowRight, Play, Sparkles, Zap, Shield, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ParticlesBackground from '@/components/ParticlesBackground';
 
 const Hero = () => {
   return (
@@ -7,6 +8,8 @@ const Hero = () => {
       id="inicio"
       className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 sm:pt-24 lg:pt-28"
     >
+      {/* Particles Canvas */}
+      <ParticlesBackground />
       {/* Background Layers */}
       <div className="absolute inset-0 bg-dark-void" />
       <div className="absolute inset-0 bg-grid-pattern opacity-20" />
