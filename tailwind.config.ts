@@ -13,9 +13,31 @@ export default {
       },
     },
     extend: {
+      screens: {
+        'xs': '475px',
+        '3xl': '1920px',
+        '4xl': '2560px',
+        'tv': '3840px',
+      },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        display: ['Cinzel', 'serif'],
+        sans: ['Rajdhani', 'sans-serif'],
+        display: ['Cinzel Decorative', 'serif'],
+        heading: ['Cinzel', 'serif'],
+        tech: ['Orbitron', 'sans-serif'],
+        body: ['Rajdhani', 'sans-serif'],
+      },
+      fontSize: {
+        '2xs': '0.625rem',
+        '10xl': '10rem',
+        '11xl': '12rem',
+        '12xl': '14rem',
+      },
+      spacing: {
+        '18': '4.5rem',
+        '22': '5.5rem',
+        '30': '7.5rem',
+        '128': '32rem',
+        '144': '36rem',
       },
       colors: {
         border: "hsl(var(--border))",
@@ -53,6 +75,7 @@ export default {
         },
         cyan: {
           glow: "hsl(var(--cyan-glow))",
+          light: "hsl(var(--cyan-light))",
           dark: "hsl(var(--cyan-dark))",
         },
         dark: {
@@ -62,6 +85,7 @@ export default {
         },
         fantasy: {
           purple: "hsl(var(--fantasy-purple))",
+          pink: "hsl(var(--fantasy-pink))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
@@ -78,6 +102,11 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        '4xl': '2rem',
+        '5xl': '2.5rem',
+      },
+      backdropBlur: {
+        xs: '2px',
       },
       keyframes: {
         "accordion-down": {
