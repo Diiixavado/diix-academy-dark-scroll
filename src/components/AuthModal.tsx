@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, ChevronRight, ChevronLeft, User, MapPin, Lock, Sparkles, LogIn, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, ChevronRight, ChevronLeft, User, MapPin, Lock, Sparkles, LogIn, UserPlus, Check, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -28,10 +28,25 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 
+// Password validation helper
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+// Age validation helper
+const validateAge = (dateString: string) => {
+  const today = new Date();
+  const birthDate = new Date(dateString);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age >= 14;
+};
+
 // Login Schema
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  password: z.string().min(1, 'Senha é obrigatória'),
 });
 
 // Signup Step 1 - Dados Básicos
@@ -39,7 +54,9 @@ const dadosBasicosSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
   sobrenome: z.string().min(2, 'Sobrenome deve ter no mínimo 2 caracteres'),
   cpf: z.string().regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$/, 'CPF inválido'),
-  data_nascimento: z.string().min(1, 'Data de nascimento é obrigatória'),
+  data_nascimento: z.string()
+    .min(1, 'Data de nascimento é obrigatória')
+    .refine(validateAge, 'Você deve ter pelo menos 14 anos'),
 });
 
 // Signup Step 2 - Informações
@@ -54,10 +71,12 @@ const informacoesSchema = z.object({
 
 // Signup Step 3 - Acesso
 const acessoSchema = z.object({
-  usuario: z.string().min(3, 'Usuário deve ter no mínimo 3 caracteres'),
+  usuario: z.string().min(6, 'Usuário deve ter no mínimo 6 caracteres'),
   email: z.string().email('Email inválido'),
-  senha: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
-  confirmar_senha: z.string().min(6, 'Confirme sua senha'),
+  senha: z.string()
+    .min(8, 'Senha deve ter no mínimo 8 caracteres')
+    .regex(passwordRegex, 'Senha deve conter maiúscula, minúscula, número e caractere especial'),
+  confirmar_senha: z.string().min(1, 'Confirme sua senha'),
 }).refine((data) => data.senha === data.confirmar_senha, {
   message: "As senhas não coincidem",
   path: ["confirmar_senha"],
@@ -96,6 +115,36 @@ const interessesOptions = [
   { value: 'eletrica', label: 'Elétrica' },
   { value: 'cyber_seguranca', label: 'Cyber Segurança' },
 ];
+
+// Password strength indicator component
+const PasswordStrengthIndicator = ({ password }: { password: string }) => {
+  const checks = [
+    { label: 'Mínimo 8 caracteres', valid: password.length >= 8 },
+    { label: 'Letra maiúscula', valid: /[A-Z]/.test(password) },
+    { label: 'Letra minúscula', valid: /[a-z]/.test(password) },
+    { label: 'Número', valid: /\d/.test(password) },
+    { label: 'Caractere especial', valid: /[@$!%*?&]/.test(password) },
+  ];
+
+  if (!password) return null;
+
+  return (
+    <div className="mt-2 space-y-1">
+      {checks.map((check, index) => (
+        <div key={index} className="flex items-center gap-2 text-xs">
+          {check.valid ? (
+            <Check className="w-3 h-3 text-green-500" />
+          ) : (
+            <X className="w-3 h-3 text-destructive" />
+          )}
+          <span className={check.valid ? 'text-green-500' : 'text-muted-foreground'}>
+            {check.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -195,64 +244,59 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
   };
 
   const formatCPF = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    if (numbers.length <= 11) {
-      return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    }
-    return value;
+    const numbers = value.replace(/\D/g, '').slice(0, 11);
+    return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
   };
 
   const formatCEP = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    if (numbers.length <= 8) {
-      return numbers.replace(/(\d{5})(\d{3})/, '$1-$2');
-    }
-    return value;
+    const numbers = value.replace(/\D/g, '').slice(0, 8);
+    return numbers.replace(/(\d{5})(\d{3})/, '$1-$2');
   };
 
   const formatPhone = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    if (numbers.length <= 11) {
-      return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-    }
-    return value;
+    const numbers = value.replace(/\D/g, '').slice(0, 11);
+    return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
   };
 
   const steps = [
-    { number: 1, title: 'Dados Básicos', icon: User },
-    { number: 2, title: 'Informações', icon: MapPin },
+    { number: 1, title: 'Dados', icon: User },
+    { number: 2, title: 'Info', icon: MapPin },
     { number: 3, title: 'Acesso', icon: Lock },
     { number: 4, title: 'Preferências', icon: Sparkles },
   ];
 
+  const inputClassName = "h-10 bg-background/50 border-primary/30 focus:border-primary font-rajdhani text-sm";
+  const labelClassName = "text-foreground font-rajdhani text-sm";
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-xl border border-primary/30 shadow-2xl shadow-primary/20 p-0">
+      <DialogContent className="w-[95vw] max-w-[440px] max-h-[85vh] overflow-y-auto bg-background/95 backdrop-blur-xl border border-primary/30 shadow-2xl shadow-primary/20 p-0">
         {/* Decorative elements */}
         <div className="absolute inset-0 bg-mesh-gradient opacity-30 pointer-events-none" />
-        <div className="absolute top-0 left-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 left-0 w-24 h-24 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
         
-        <div className="relative z-10 p-6">
-          <DialogHeader className="mb-6">
-            <DialogTitle className="text-2xl font-cinzel-decorative text-center text-foreground">
+        <div className="relative z-10 p-4 sm:p-5">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-xl sm:text-2xl font-cinzel-decorative text-center text-foreground">
               <span className="bg-gradient-to-r from-primary via-cyan-300 to-primary bg-clip-text text-transparent animate-shimmer bg-[length:200%_100%]">
                 {mode === 'login' ? 'Entrar' : 'Criar Conta'}
               </span>
             </DialogTitle>
             
             {/* Mode Toggle */}
-            <div className="flex justify-center gap-2 mt-4">
+            <div className="flex justify-center gap-1 mt-3">
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => handleModeSwitch('login')}
-                className={`relative px-6 py-2 font-rajdhani transition-all duration-300 ${
+                className={`relative px-4 py-1.5 font-rajdhani text-sm transition-all duration-300 ${
                   mode === 'login' 
                     ? 'text-primary' 
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <LogIn className="w-4 h-4 mr-2" />
+                <LogIn className="w-4 h-4 mr-1.5" />
                 Entrar
                 {mode === 'login' && (
                   <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent" />
@@ -260,14 +304,15 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
               </Button>
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => handleModeSwitch('signup')}
-                className={`relative px-6 py-2 font-rajdhani transition-all duration-300 ${
+                className={`relative px-4 py-1.5 font-rajdhani text-sm transition-all duration-300 ${
                   mode === 'signup' 
                     ? 'text-primary' 
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <UserPlus className="w-4 h-4 mr-2" />
+                <UserPlus className="w-4 h-4 mr-1.5" />
                 Cadastrar
                 {mode === 'signup' && (
                   <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent" />
@@ -278,34 +323,34 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
           {/* Signup Steps Indicator */}
           {mode === 'signup' && (
-            <div className="flex justify-center gap-2 sm:gap-4 mb-6">
+            <div className="flex justify-center items-center gap-1 mb-4">
               {steps.map((step, index) => (
                 <div key={step.number} className="flex items-center">
                   <div
-                    className={`flex items-center gap-1 sm:gap-2 transition-all duration-300 ${
+                    className={`flex flex-col items-center transition-all duration-300 ${
                       signupStep === step.number
-                        ? 'text-primary scale-105'
+                        ? 'text-primary'
                         : signupStep > step.number
                         ? 'text-primary/60'
-                        : 'text-muted-foreground'
+                        : 'text-muted-foreground/50'
                     }`}
                   >
                     <div
-                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                      className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
                         signupStep === step.number
-                          ? 'border-primary bg-primary/20 shadow-lg shadow-primary/30'
+                          ? 'border-primary bg-primary/20 shadow-md shadow-primary/30'
                           : signupStep > step.number
                           ? 'border-primary/60 bg-primary/10'
                           : 'border-muted-foreground/30'
                       }`}
                     >
-                      <step.icon className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <step.icon className="w-4 h-4" />
                     </div>
-                    <span className="hidden md:block text-xs font-rajdhani">{step.title}</span>
+                    <span className="text-[10px] mt-1 font-rajdhani hidden sm:block">{step.title}</span>
                   </div>
                   {index < steps.length - 1 && (
-                    <div className={`w-4 sm:w-6 h-0.5 mx-1 transition-colors duration-300 ${
-                      signupStep > step.number ? 'bg-primary/60' : 'bg-muted-foreground/30'
+                    <div className={`w-6 sm:w-10 h-0.5 mx-1 transition-colors duration-300 ${
+                      signupStep > step.number ? 'bg-primary/60' : 'bg-muted-foreground/20'
                     }`} />
                   )}
                 </div>
@@ -324,12 +369,12 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-rajdhani">Email</FormLabel>
+                        <FormLabel className={labelClassName}>Email</FormLabel>
                         <FormControl>
                           <Input
                             type="email"
                             placeholder="seu@email.com"
-                            className="bg-background/50 border-primary/30 focus:border-primary focus:ring-primary/20 font-rajdhani"
+                            className={inputClassName}
                             {...field}
                           />
                         </FormControl>
@@ -343,13 +388,13 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-rajdhani">Senha</FormLabel>
+                        <FormLabel className={labelClassName}>Senha</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
                               type={showPassword ? 'text' : 'password'}
                               placeholder="••••••••"
-                              className="bg-background/50 border-primary/30 focus:border-primary focus:ring-primary/20 font-rajdhani pr-10"
+                              className={`${inputClassName} pr-10`}
                               {...field}
                             />
                             <button
@@ -368,7 +413,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
 
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-primary to-cyan-400 hover:from-primary/90 hover:to-cyan-400/90 text-primary-foreground font-cinzel font-bold py-6 shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all duration-300"
+                    className="w-full h-11 bg-gradient-to-r from-primary to-cyan-400 hover:from-primary/90 hover:to-cyan-400/90 text-primary-foreground font-cinzel font-bold shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all duration-300"
                   >
                     Entrar na Academia
                   </Button>
@@ -379,20 +424,16 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             {/* Signup Step 1 - Dados Básicos */}
             {mode === 'signup' && signupStep === 1 && (
               <Form {...dadosBasicosForm}>
-                <form onSubmit={dadosBasicosForm.handleSubmit(handleStep1Submit)} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={dadosBasicosForm.handleSubmit(handleStep1Submit)} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <FormField
                       control={dadosBasicosForm.control}
                       name="nome"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground font-rajdhani">Nome</FormLabel>
+                          <FormLabel className={labelClassName}>Nome</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Seu nome"
-                              className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
-                              {...field}
-                            />
+                            <Input placeholder="Seu nome" className={inputClassName} {...field} />
                           </FormControl>
                           <FormMessage className="text-destructive text-xs" />
                         </FormItem>
@@ -403,13 +444,9 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                       name="sobrenome"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground font-rajdhani">Sobrenome</FormLabel>
+                          <FormLabel className={labelClassName}>Sobrenome</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Seu sobrenome"
-                              className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
-                              {...field}
-                            />
+                            <Input placeholder="Seu sobrenome" className={inputClassName} {...field} />
                           </FormControl>
                           <FormMessage className="text-destructive text-xs" />
                         </FormItem>
@@ -417,49 +454,44 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={dadosBasicosForm.control}
-                      name="cpf"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground font-rajdhani">CPF</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="000.000.000-00"
-                              className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
-                              {...field}
-                              onChange={(e) => field.onChange(formatCPF(e.target.value))}
-                            />
-                          </FormControl>
-                          <FormMessage className="text-destructive text-xs" />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={dadosBasicosForm.control}
-                      name="data_nascimento"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground font-rajdhani">Nascimento</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="date"
-                              className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage className="text-destructive text-xs" />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={dadosBasicosForm.control}
+                    name="cpf"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={labelClassName}>CPF</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="000.000.000-00"
+                            className={inputClassName}
+                            {...field}
+                            onChange={(e) => field.onChange(formatCPF(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage className="text-destructive text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={dadosBasicosForm.control}
+                    name="data_nascimento"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={labelClassName}>Data de Nascimento</FormLabel>
+                        <FormControl>
+                          <Input type="date" className={inputClassName} {...field} />
+                        </FormControl>
+                        <FormMessage className="text-destructive text-xs" />
+                      </FormItem>
+                    )}
+                  />
 
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-primary to-cyan-400 hover:from-primary/90 hover:to-cyan-400/90 text-primary-foreground font-cinzel font-bold py-6 shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all duration-300"
+                    className="w-full h-11 bg-gradient-to-r from-primary to-cyan-400 hover:from-primary/90 hover:to-cyan-400/90 text-primary-foreground font-cinzel font-bold shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all duration-300"
                   >
-                    Avançar <ChevronRight className="ml-2 w-5 h-5" />
+                    Avançar <ChevronRight className="ml-2 w-4 h-4" />
                   </Button>
                 </form>
               </Form>
@@ -468,18 +500,18 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             {/* Signup Step 2 - Informações */}
             {mode === 'signup' && signupStep === 2 && (
               <Form {...informacoesForm}>
-                <form onSubmit={informacoesForm.handleSubmit(handleStep2Submit)} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={informacoesForm.handleSubmit(handleStep2Submit)} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <FormField
                       control={informacoesForm.control}
                       name="cep"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground font-rajdhani">CEP</FormLabel>
+                          <FormLabel className={labelClassName}>CEP</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="00000-000"
-                              className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
+                              className={inputClassName}
                               {...field}
                               onChange={(e) => field.onChange(formatCEP(e.target.value))}
                             />
@@ -493,11 +525,11 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                       name="telefone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground font-rajdhani">Telefone</FormLabel>
+                          <FormLabel className={labelClassName}>Telefone</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="(00) 00000-0000"
-                              className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
+                              className={inputClassName}
                               {...field}
                               onChange={(e) => field.onChange(formatPhone(e.target.value))}
                             />
@@ -513,32 +545,24 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     name="endereco"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-rajdhani">Endereço Completo</FormLabel>
+                        <FormLabel className={labelClassName}>Endereço</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Rua, número, complemento"
-                            className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
-                            {...field}
-                          />
+                          <Input placeholder="Rua, número, complemento" className={inputClassName} {...field} />
                         </FormControl>
                         <FormMessage className="text-destructive text-xs" />
                       </FormItem>
                     )}
                   />
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3">
                     <FormField
                       control={informacoesForm.control}
                       name="cidade"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground font-rajdhani">Cidade</FormLabel>
+                          <FormLabel className={labelClassName}>Cidade</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Sua cidade"
-                              className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
-                              {...field}
-                            />
+                            <Input placeholder="Cidade" className={inputClassName} {...field} />
                           </FormControl>
                           <FormMessage className="text-destructive text-xs" />
                         </FormItem>
@@ -549,13 +573,9 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                       name="estado"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground font-rajdhani">Estado</FormLabel>
+                          <FormLabel className={labelClassName}>Estado</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="UF"
-                              className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
-                              {...field}
-                            />
+                            <Input placeholder="UF" className={inputClassName} {...field} />
                           </FormControl>
                           <FormMessage className="text-destructive text-xs" />
                         </FormItem>
@@ -568,33 +588,29 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     name="pais"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-rajdhani">País</FormLabel>
+                        <FormLabel className={labelClassName}>País</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="País"
-                            className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
-                            {...field}
-                          />
+                          <Input placeholder="País" className={inputClassName} {...field} />
                         </FormControl>
                         <FormMessage className="text-destructive text-xs" />
                       </FormItem>
                     )}
                   />
 
-                  <div className="flex gap-4">
+                  <div className="flex gap-3 pt-1">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleBack}
-                      className="flex-1 border-primary/30 hover:bg-primary/10 font-cinzel"
+                      className="flex-1 h-10 border-primary/30 hover:bg-primary/10 font-cinzel text-sm"
                     >
-                      <ChevronLeft className="mr-2 w-5 h-5" /> Voltar
+                      <ChevronLeft className="mr-1 w-4 h-4" /> Voltar
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 bg-gradient-to-r from-primary to-cyan-400 hover:from-primary/90 hover:to-cyan-400/90 text-primary-foreground font-cinzel font-bold shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all duration-300"
+                      className="flex-1 h-10 bg-gradient-to-r from-primary to-cyan-400 hover:from-primary/90 hover:to-cyan-400/90 text-primary-foreground font-cinzel font-bold text-sm shadow-lg shadow-primary/30"
                     >
-                      Avançar <ChevronRight className="ml-2 w-5 h-5" />
+                      Avançar <ChevronRight className="ml-1 w-4 h-4" />
                     </Button>
                   </div>
                 </form>
@@ -604,19 +620,15 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             {/* Signup Step 3 - Acesso */}
             {mode === 'signup' && signupStep === 3 && (
               <Form {...acessoForm}>
-                <form onSubmit={acessoForm.handleSubmit(handleStep3Submit)} className="space-y-4">
+                <form onSubmit={acessoForm.handleSubmit(handleStep3Submit)} className="space-y-3">
                   <FormField
                     control={acessoForm.control}
                     name="usuario"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-rajdhani">Nome de Usuário</FormLabel>
+                        <FormLabel className={labelClassName}>Nome de Usuário (mín. 6 caracteres)</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="seu_usuario"
-                            className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
-                            {...field}
-                          />
+                          <Input placeholder="seu_usuario" className={inputClassName} {...field} />
                         </FormControl>
                         <FormMessage className="text-destructive text-xs" />
                       </FormItem>
@@ -628,14 +640,9 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-rajdhani">Email</FormLabel>
+                        <FormLabel className={labelClassName}>Email</FormLabel>
                         <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="seu@email.com"
-                            className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
-                            {...field}
-                          />
+                          <Input type="email" placeholder="seu@email.com" className={inputClassName} {...field} />
                         </FormControl>
                         <FormMessage className="text-destructive text-xs" />
                       </FormItem>
@@ -647,13 +654,13 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     name="senha"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-rajdhani">Senha</FormLabel>
+                        <FormLabel className={labelClassName}>Senha</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
                               type={showPassword ? 'text' : 'password'}
                               placeholder="••••••••"
-                              className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani pr-10"
+                              className={`${inputClassName} pr-10`}
                               {...field}
                             />
                             <button
@@ -665,6 +672,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                             </button>
                           </div>
                         </FormControl>
+                        <PasswordStrengthIndicator password={field.value} />
                         <FormMessage className="text-destructive text-xs" />
                       </FormItem>
                     )}
@@ -675,13 +683,13 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     name="confirmar_senha"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-rajdhani">Confirmar Senha</FormLabel>
+                        <FormLabel className={labelClassName}>Confirmar Senha</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
                               type={showConfirmPassword ? 'text' : 'password'}
                               placeholder="••••••••"
-                              className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani pr-10"
+                              className={`${inputClassName} pr-10`}
                               {...field}
                             />
                             <button
@@ -698,20 +706,20 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     )}
                   />
 
-                  <div className="flex gap-4">
+                  <div className="flex gap-3 pt-1">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleBack}
-                      className="flex-1 border-primary/30 hover:bg-primary/10 font-cinzel"
+                      className="flex-1 h-10 border-primary/30 hover:bg-primary/10 font-cinzel text-sm"
                     >
-                      <ChevronLeft className="mr-2 w-5 h-5" /> Voltar
+                      <ChevronLeft className="mr-1 w-4 h-4" /> Voltar
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 bg-gradient-to-r from-primary to-cyan-400 hover:from-primary/90 hover:to-cyan-400/90 text-primary-foreground font-cinzel font-bold shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all duration-300"
+                      className="flex-1 h-10 bg-gradient-to-r from-primary to-cyan-400 hover:from-primary/90 hover:to-cyan-400/90 text-primary-foreground font-cinzel font-bold text-sm shadow-lg shadow-primary/30"
                     >
-                      Avançar <ChevronRight className="ml-2 w-5 h-5" />
+                      Avançar <ChevronRight className="ml-1 w-4 h-4" />
                     </Button>
                   </div>
                 </form>
@@ -721,22 +729,17 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
             {/* Signup Step 4 - Preferências */}
             {mode === 'signup' && signupStep === 4 && (
               <Form {...preferenciasForm}>
-                <form onSubmit={preferenciasForm.handleSubmit(handleStep4Submit)} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={preferenciasForm.handleSubmit(handleStep4Submit)} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <FormField
                       control={preferenciasForm.control}
                       name="referencia"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground font-rajdhani">Código de Referência</FormLabel>
+                          <FormLabel className={labelClassName}>Código Referência</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Código do amigo"
-                              className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
-                              {...field}
-                            />
+                            <Input placeholder="Código" className={inputClassName} {...field} />
                           </FormControl>
-                          <FormMessage className="text-destructive text-xs" />
                         </FormItem>
                       )}
                     />
@@ -745,15 +748,10 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                       name="cupom"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground font-rajdhani">Cupom de Desconto</FormLabel>
+                          <FormLabel className={labelClassName}>Cupom</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="CUPOM10"
-                              className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani"
-                              {...field}
-                            />
+                            <Input placeholder="CUPOM10" className={inputClassName} {...field} />
                           </FormControl>
-                          <FormMessage className="text-destructive text-xs" />
                         </FormItem>
                       )}
                     />
@@ -764,10 +762,10 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     name="nivel_conhecimento"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-rajdhani">Nível de Conhecimento</FormLabel>
+                        <FormLabel className={labelClassName}>Nível de Conhecimento</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="bg-background/50 border-primary/30 focus:border-primary font-rajdhani">
+                            <SelectTrigger className={inputClassName}>
                               <SelectValue placeholder="Selecione seu nível" />
                             </SelectTrigger>
                           </FormControl>
@@ -793,8 +791,8 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     name="interesses"
                     render={() => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-rajdhani">Áreas de Interesse</FormLabel>
-                        <div className="grid grid-cols-2 gap-3 mt-2">
+                        <FormLabel className={labelClassName}>Áreas de Interesse</FormLabel>
+                        <div className="grid grid-cols-2 gap-2 mt-1.5">
                           {interessesOptions.map((interesse) => (
                             <FormField
                               key={interesse.value}
@@ -802,7 +800,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                               name="interesses"
                               render={({ field }) => (
                                 <FormItem
-                                  className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-primary/20 bg-background/30 hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 cursor-pointer"
+                                  className="flex items-center space-x-2 space-y-0 p-2.5 rounded-lg border border-primary/20 bg-background/30 hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 cursor-pointer"
                                 >
                                   <FormControl>
                                     <Checkbox
@@ -819,7 +817,7 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                                       className="border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                     />
                                   </FormControl>
-                                  <FormLabel className="text-sm font-rajdhani text-foreground cursor-pointer">
+                                  <FormLabel className="text-xs font-rajdhani text-foreground cursor-pointer leading-tight">
                                     {interesse.label}
                                   </FormLabel>
                                 </FormItem>
@@ -832,20 +830,20 @@ const AuthModal = ({ isOpen, onClose }: AuthModalProps) => {
                     )}
                   />
 
-                  <div className="flex gap-4 pt-2">
+                  <div className="flex gap-3 pt-1">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleBack}
-                      className="flex-1 border-primary/30 hover:bg-primary/10 font-cinzel"
+                      className="flex-1 h-10 border-primary/30 hover:bg-primary/10 font-cinzel text-sm"
                     >
-                      <ChevronLeft className="mr-2 w-5 h-5" /> Voltar
+                      <ChevronLeft className="mr-1 w-4 h-4" /> Voltar
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 bg-gradient-to-r from-primary to-cyan-400 hover:from-primary/90 hover:to-cyan-400/90 text-primary-foreground font-cinzel font-bold shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all duration-300"
+                      className="flex-1 h-10 bg-gradient-to-r from-primary to-cyan-400 hover:from-primary/90 hover:to-cyan-400/90 text-primary-foreground font-cinzel font-bold text-sm shadow-lg shadow-primary/30"
                     >
-                      <Sparkles className="mr-2 w-5 h-5" /> Criar Conta
+                      <Sparkles className="mr-1 w-4 h-4" /> Criar Conta
                     </Button>
                   </div>
                 </form>
